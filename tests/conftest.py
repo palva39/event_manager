@@ -195,6 +195,17 @@ async def admin_user(db_session: AsyncSession):
     await db_session.commit()
     return user
 
+async def user_token(db_session, user):
+    # Generate a JWT for the provided user
+    token = create_access_token(data={"sub": user.email, "role": user.role})
+    return token
+
+@pytest.fixture
+async def admin_token(db_session, admin_user):
+    # Generate a JWT for the admin user
+    token = create_access_token(data={"sub": admin_user.email, "role": admin_user.role})
+    return token
+
 @pytest.fixture
 async def manager_user(db_session: AsyncSession):
     user = User(
@@ -261,3 +272,36 @@ def user_response_data():
 @pytest.fixture
 def login_request_data():
     return {"username": "john_doe_123", "password": "SecurePassword123!"}
+
+@pytest.fixture
+async def user_token(db_session):
+    # Create a mock user in the database
+    user = User(
+        email="user@example.com",
+        password_hash="hashed_password",  # Replace with an actual hash if needed
+        role=UserRole.AUTHENTICATED,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    
+    # Generate a JWT for this user
+    token = create_access_token(data={"sub": user.email, "role": user.role})
+    return token
+
+
+@pytest.fixture
+async def admin_token(db_session):
+    # Create a mock admin user in the database
+    admin = User(
+        email="admin@example.com",
+        password_hash="hashed_password",  # Replace with an actual hash if needed
+        role=UserRole.ADMIN,
+    )
+    db_session.add(admin)
+    await db_session.commit()
+    await db_session.refresh(admin)
+    
+    # Generate a JWT for this admin
+    token = create_access_token(data={"sub": admin.email, "role": admin.role})
+    return token
