@@ -261,3 +261,8 @@ def user_response_data():
 @pytest.fixture
 def login_request_data():
     return {"username": "john_doe_123", "password": "SecurePassword123!"}
+
+@pytest.fixture(scope="function")
+async def user_token(user):
+    # Generate a JWT token for a regular authenticated user
+    return create_access_token({"sub": str(user.id), "role": "user"})
