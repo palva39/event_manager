@@ -249,7 +249,7 @@ def user_update_data():
 @pytest.fixture
 def user_response_data():
     return {
-        "id": "unique-id-string",
+        "id": str(uuid4()),
         "username": "testuser",
         "email": "test@example.com",
         "last_login_at": datetime.now(),
