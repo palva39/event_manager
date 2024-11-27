@@ -15,6 +15,9 @@ from uuid import UUID
 from app.services.email_service import EmailService
 from app.models.user_model import UserRole
 import logging
+import re
+from fastapi import HTTPException
+
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -192,3 +195,25 @@ class UserService:
             await session.commit()
             return True
         return False
+
+    @classmethod
+    async def validate_username(cls, session: AsyncSession, username: str):
+        # Length constraint
+        if len(username) < 3 or len(username) > 20:
+            raise HTTPException(
+                status_code=400, detail="Username must be between 3 and 20 characters."
+            )
+        
+        # Allowed characters: letters, numbers, and underscores only
+        if not re.match(r"^[a-zA-Z0-9_]+$", username):
+            raise HTTPException(
+                status_code=400,
+                detail="Username can only contain letters, numbers, and underscores.",
+            )
+        
+        # Uniqueness check
+        existing_user = await cls.get_by_nickname(session, username)
+        if existing_user:
+            raise HTTPException(
+                status_code=400, detail="Username already exists."
+            )
