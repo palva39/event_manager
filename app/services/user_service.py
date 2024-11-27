@@ -133,26 +133,52 @@ class UserService:
     
 
     @classmethod
-    async def login_user(cls, session: AsyncSession, email: str, password: str) -> Optional[User]:
-        user = await cls.get_by_email(session, email)
-        if user:
-            if user.email_verified is False:
-                return None
+    async def login_user(cls, session: AsyncSession, identifier: str, password: str) -> Optional[User]:
+        try:
+            # Determine if identifier is an email or nickname
+            if "@" in identifier and "." in identifier:  # Simple check for an email
+                user = await cls.get_by_email(session, identifier)
+            else:
+                user = await cls.get_by_nickname(session, identifier)
+
+            if not user:
+                logger.error(f"Login failed: User with identifier {identifier} not found.")
+                raise ValueError("The email/nickname or password is incorrect.")
+
+            # Check if the email is verified
+            if not user.email_verified:
+                logger.error(f"Login failed: Email not verified for user {identifier}.")
+                raise ValueError("The email is not verified.")
+
+            # Check if the account is locked
             if user.is_locked:
-                return None
+                logger.error(f"Login failed: Account is locked for user {identifier}.")
+                raise ValueError("The account is locked.")
+
+            # Validate the password
             if verify_password(password, user.hashed_password):
+                # Successful login: reset failed attempts and update last login time
                 user.failed_login_attempts = 0
                 user.last_login_at = datetime.now(timezone.utc)
                 session.add(user)
                 await session.commit()
+                logger.info(f"User {identifier} logged in successfully.")
                 return user
             else:
+                # Increment failed login attempts
                 user.failed_login_attempts += 1
                 if user.failed_login_attempts >= settings.max_login_attempts:
                     user.is_locked = True
+                    logger.error(f"Login failed: Account locked due to too many failed attempts for user {identifier}.")
                 session.add(user)
                 await session.commit()
-        return None
+                raise ValueError("The email/nickname or password is incorrect.")
+        except ValueError as ve:
+            logger.error(f"Login error for user {identifier}: {ve}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error during login for user {identifier}: {e}")
+            return None
 
     @classmethod
     async def is_account_locked(cls, session: AsyncSession, email: str) -> bool:
