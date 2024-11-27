@@ -196,6 +196,14 @@ async def admin_user(db_session: AsyncSession):
     return user
 
 async def user_token(db_session, user):
+    user = User(
+        email="user@example.com",
+        hashed_password=hash_password("SecurePassword123!"),  # Correct field name
+        role=UserRole.AUTHENTICATED,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
     # Generate a JWT for the provided user
     token = create_access_token(data={"sub": user.email, "role": user.role})
     return token
