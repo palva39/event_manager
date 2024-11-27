@@ -270,9 +270,9 @@ async def user_token(user):
 @pytest.fixture(scope="function")
 async def admin_token(admin_user):
     # Generate a JWT token for an admin user
-    return create_access_token({"sub": str(admin_user.id), "role": "admin"})
+    return create_access_token({"sub": str(user.id), "role": "admin"})
 
 @pytest.fixture(scope="function")
 async def manager_token(manager_user):
     # Generate a JWT token for a manager user
-    return create_access_token({"sub": str(manager_user.id), "role": "manager"})
+    return create_access_token({"sub": str(user.id), "role": "manager"})
