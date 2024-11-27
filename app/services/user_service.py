@@ -55,38 +55,45 @@ class UserService:
     @classmethod
     async def create(cls, session: AsyncSession, user_data: Dict[str, str], email_service: EmailService) -> Optional[User]:
         try:
+            # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
 
-            # Generate a default nickname if none is provided
-            if not validated_data.get("nickname"):
-                validated_data["nickname"] = generate_nickname()
-
-            # Validate the username
-            await cls.validate_username(session, validated_data["nickname"])
-
-            # Check for existing user by email
-            existing_user = await cls.get_by_email(session, validated_data["email"])
+            # Check if email already exists
+            existing_user = await cls.get_by_email(session, validated_data['email'])
             if existing_user:
-                raise ValueError("User with the given email already exists.")
+                logger.error("User with given email already exists.")
+                return None
 
-            # Hash password and prepare the new user
-            validated_data["hashed_password"] = hash_password(validated_data.pop("password"))
+            # Generate unique nickname
+            new_nickname = generate_nickname()
+            while await cls.get_by_nickname(session, new_nickname):
+                logger.info(f"Generated nickname '{new_nickname}' already exists. Generating a new one.")
+                new_nickname = generate_nickname()
+
+            validated_data['nickname'] = new_nickname
+
+            # Hash the password
+            validated_data['hashed_password'] = hash_password(validated_data.pop('password'))
+
+            # Create new user instance
             new_user = User(**validated_data)
-
-            # Assign verification token and save the new user
             new_user.verification_token = generate_verification_token()
+
+            # Add user to session and commit
             session.add(new_user)
             await session.commit()
 
             # Send verification email
             await email_service.send_verification_email(new_user)
 
+            logger.info(f"User '{new_user.email}' created successfully with nickname '{new_user.nickname}'.")
             return new_user
+
         except ValidationError as e:
             logger.error(f"Validation error during user creation: {e}")
             return None
-        except ValueError as e:
-            logger.error(f"User creation failed: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error during user creation: {e}")
             return None
 
     @classmethod
