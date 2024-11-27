@@ -55,28 +55,23 @@ class UserService:
     @classmethod
     async def create(cls, session: AsyncSession, user_data: Dict[str, str], email_service: EmailService) -> Optional[User]:
         try:
-        # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
 
-        # Validate username
+            # Generate a default nickname if none is provided
+            if not validated_data.get("nickname"):
+                validated_data["nickname"] = generate_nickname()
+
+            # Validate the username
             await cls.validate_username(session, validated_data["nickname"])
 
-        # Check for existing user by email
+            # Check for existing user by email
             existing_user = await cls.get_by_email(session, validated_data["email"])
             if existing_user:
-                logger.error("User with the given email already exists.")
-                return None
+                raise ValueError("User with the given email already exists.")
 
             # Hash password and prepare the new user
             validated_data["hashed_password"] = hash_password(validated_data.pop("password"))
             new_user = User(**validated_data)
-
-            # Generate a unique nickname if not provided
-            if not validated_data.get("nickname"):
-                new_nickname = generate_nickname()
-                while await cls.get_by_nickname(session, new_nickname):
-                    new_nickname = generate_nickname()
-                new_user.nickname = new_nickname
 
             # Assign verification token and save the new user
             new_user.verification_token = generate_verification_token()
@@ -90,8 +85,8 @@ class UserService:
         except ValidationError as e:
             logger.error(f"Validation error during user creation: {e}")
             return None
-        except HTTPException as e:
-            logger.error(f"Username validation failed: {e.detail}")
+        except ValueError as e:
+            logger.error(f"User creation failed: {e}")
             return None
 
     @classmethod
