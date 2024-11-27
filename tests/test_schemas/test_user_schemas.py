@@ -2,7 +2,7 @@ from builtins import str
 import pytest
 from pydantic import ValidationError
 from datetime import datetime
-from uuid import uuid
+import uuid
 from app.schemas.user_schemas import UserBase, UserCreate, UserUpdate, UserResponse, UserListResponse, LoginRequest
 
 # Tests for UserBase
@@ -69,6 +69,10 @@ def test_user_response_valid(user_response_data):
 
 # Tests for LoginRequest
 def test_login_request_valid(login_request_data):
+    login_request_data = {
+        "email": "john.doe@example.com",  # Change this field
+        "password": "SecurePassword123!"
+    }
     login = LoginRequest(**login_request_data)
     assert login.email == login_request_data["email"]
     assert login.password == login_request_data["password"]
