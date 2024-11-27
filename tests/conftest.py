@@ -313,3 +313,8 @@ async def admin_token(db_session):
     # Generate a JWT for this admin
     token = create_access_token(data={"sub": admin.email, "role": admin.role.name})
     return token
+
+@pytest.fixture
+async def manager_token(db_session, manager_user):
+    token = create_access_token(data={"sub": manager_user.email, "role": manager_user.role.name})
+    return token
