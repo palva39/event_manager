@@ -205,13 +205,13 @@ async def user_token(db_session, user):
     await db_session.commit()
     await db_session.refresh(user)
     # Generate a JWT for the provided user
-    token = create_access_token(data={"sub": user.email, "role": user.role})
+    token = create_access_token(data={"sub": user.email, "role": user.role.name})
     return token
 
 @pytest.fixture
 async def admin_token(db_session, admin_user):
     # Generate a JWT for the admin user
-    token = create_access_token(data={"sub": admin_user.email, "role": admin_user.role})
+    token = create_access_token(data={"sub": admin_user.email, "role": admin_user.role.name})
     return token
 
 @pytest.fixture
@@ -294,7 +294,7 @@ async def user_token(db_session):
     await db_session.refresh(user)
     
     # Generate a JWT for this user
-    token = create_access_token(data={"sub": user.email, "role": user.role})
+    token = create_access_token(data={"sub": user.email, "role": user.role.name})
     return token
 
 
@@ -303,7 +303,7 @@ async def admin_token(db_session):
     # Create a mock admin user in the database
     admin = User(
         email="admin@example.com",
-        password_hash="hashed_password",  # Replace with an actual hash if needed
+        hash_password="hashed_password",  # Replace with an actual hash if needed
         role=UserRole.ADMIN,
     )
     db_session.add(admin)
@@ -311,5 +311,5 @@ async def admin_token(db_session):
     await db_session.refresh(admin)
     
     # Generate a JWT for this admin
-    token = create_access_token(data={"sub": admin.email, "role": admin.role})
+    token = create_access_token(data={"sub": admin.email, "role": admin.role.name})
     return token
