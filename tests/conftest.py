@@ -173,3 +173,21 @@ async def admin_token(db_session, admin_user):
 async def manager_token(db_session, manager_user):
     token = create_access_token(data={"sub": manager_user.email, "role": manager_user.role.name})
     return token
+
+@pytest.fixture(scope="function")
+async def unverified_user(db_session):
+    user_data = {
+        "nickname": fake.user_name(),
+        "first_name": fake.first_name(),
+        "last_name": fake.last_name(),
+        "email": fake.email(),
+        "hashed_password": hash_password("MySuperPassword$1234"),
+        "role": UserRole.AUTHENTICATED,
+        "email_verified": False,  # Mark email as unverified
+        "is_locked": False,
+    }
+    user = User(**user_data)
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
