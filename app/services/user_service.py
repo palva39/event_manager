@@ -215,23 +215,16 @@ class UserService:
         return False
 
     @classmethod
-    async def validate_username(cls, session: AsyncSession, username: str):
+    async def validate_username(cls, session: AsyncSession, username: Optional[str]):
+        if not username:
+            raise ValueError("Username cannot be None or empty.")
         # Length constraint
         if len(username) < 3 or len(username) > 20:
-            raise HTTPException(
-                status_code=400, detail="Username must be between 3 and 20 characters."
-            )
-        
+            raise ValueError("Username must be between 3 and 20 characters.")
         # Allowed characters: letters, numbers, and underscores only
         if not re.match(r"^[a-zA-Z0-9_]+$", username):
-            raise HTTPException(
-                status_code=400,
-                detail="Username can only contain letters, numbers, and underscores.",
-            )
-        
+            raise ValueError("Username can only contain letters, numbers, and underscores.")
         # Uniqueness check
         existing_user = await cls.get_by_nickname(session, username)
         if existing_user:
-            raise HTTPException(
-                status_code=400, detail="Username already exists."
-            )
+            raise ValueError("Username already exists.")
