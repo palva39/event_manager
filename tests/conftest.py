@@ -94,6 +94,7 @@ async def db_session(setup_database):
 async def locked_user(db_session):
     unique_email = fake.email()
     user_data = {
+        "id": uuid4(),
         "nickname": fake.user_name(),
         "first_name": fake.first_name(),
         "last_name": fake.last_name(),
