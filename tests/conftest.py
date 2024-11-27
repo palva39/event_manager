@@ -258,3 +258,53 @@ async def admin_token(db_session, admin_user):
     """
     token = create_access_token(data={"sub": admin_user.email, "role": admin_user.role.name})
     return token
+
+@pytest.fixture(scope="function")
+async def users_with_same_role_50_users(db_session: AsyncSession):
+    users = []
+    for _ in range(50):
+        user_data = {
+            "nickname": fake.user_name(),
+            "first_name": fake.first_name(),
+            "last_name": fake.last_name(),
+            "email": fake.email(),
+            "hashed_password": hash_password(fake.password()),
+            "role": UserRole.AUTHENTICATED,
+            "email_verified": False,
+            "is_locked": False,
+        }
+        user = User(**user_data)
+        db_session.add(user)
+        users.append(user)
+    await db_session.commit()
+    return users
+
+# Fixture for a manager user
+@pytest.fixture(scope="function")
+async def manager_user(db_session: AsyncSession):
+    user = User(
+        nickname="manager_user",
+        first_name="Manager",
+        last_name="User",
+        email="manager@example.com",
+        hashed_password=hash_password("SecurePassword123!"),
+        role=UserRole.MANAGER,
+        email_verified=True,
+        is_locked=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return user
+
+# Fixture for user response data
+@pytest.fixture(scope="function")
+def user_response_data():
+    return {
+        "id": "unique-id-string",
+        "username": "testuser",
+        "email": "test@example.com",
+        "last_login_at": fake.date_time(),
+        "created_at": fake.date_time(),
+        "updated_at": fake.date_time(),
+        "links": [],
+    }
