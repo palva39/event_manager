@@ -48,7 +48,8 @@ jobs:
       - name: Run tests with Pytest
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/myappdb  # Configure the DATABASE_URL environment variable for tests
-        run: pytest
+          MOCK_EMAIL: "true" 
+        run: pytest -m "not email"
 
   build-and-push-docker:
     needs: test

@@ -22,6 +22,7 @@ from fastapi import HTTPException
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
+
 class UserService:
     @classmethod
     async def _execute_query(cls, session: AsyncSession, query):
@@ -51,12 +52,17 @@ class UserService:
     @classmethod
     async def get_by_email(cls, session: AsyncSession, email: str) -> Optional[User]:
         return await cls._fetch_user(session, email=email)
-
+        
     @classmethod
     async def create(cls, session: AsyncSession, user_data: Dict[str, str], email_service: EmailService) -> Optional[User]:
         try:
             # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
+
+            # Validate password
+            if not cls.validate_password(validated_data['password']):
+                logger.error("Password validation failed.")
+                return None
 
             # Check if email already exists
             existing_user = await cls.get_by_email(session, validated_data['email'])
@@ -256,3 +262,22 @@ class UserService:
         existing_user = await cls.get_by_nickname(session, username)
         if existing_user:
             raise ValueError("Username already exists.")
+        
+    @classmethod
+    def validate_password(cls, password: str) -> bool:
+        if len(password) < 8:
+            logger.error("Password must be at least 8 characters long.")
+            return False
+        if not re.search(r'[A-Z]', password):
+            logger.error("Password must contain at least one uppercase letter.")
+            return False
+        if not re.search(r'[a-z]', password):
+            logger.error("Password must contain at least one lowercase letter.")
+            return False
+        if not re.search(r'[0-9]', password):
+            logger.error("Password must contain at least one digit.")
+            return False
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            logger.error("Password must contain at least one special character.")
+            return False
+        return True
