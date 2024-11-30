@@ -8,6 +8,7 @@ from app.services.user_service import UserService
 pytestmark = pytest.mark.asyncio
 
 # Test creating a user with valid data
+@pytest.mark.email
 async def test_create_user_with_valid_data(db_session, email_service):
     user_data = {
         "email": "valid_user@example.com",
@@ -89,6 +90,7 @@ async def test_list_users_with_pagination(db_session, users_with_same_role_50_us
     assert len(users_page_2) == 10
     assert users_page_1[0].id != users_page_2[0].id
 
+@pytest.mark.email
 # Test registering a user with valid data
 async def test_register_user_with_valid_data(db_session, email_service):
     user_data = {
