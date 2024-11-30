@@ -21,10 +21,7 @@ from fastapi import HTTPException
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-class InvalidPasswordError(Exception):
-        def __init__(self, message: str):
-            self.message = message
-            super().__init__(self.message)
+
 
 class UserService:
     @classmethod
@@ -61,12 +58,11 @@ class UserService:
         try:
             # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
-            
-            try:
-                cls.validate_password(validated_data['password'])
-            except InvalidPasswordError as e:
-                logger.error(f"Password validation error: {e}")
-                return {"error": str(e)}
+
+            # Validate password
+            if not cls.validate_password(validated_data['password']):
+                logger.error("Password validation failed.")
+                return None
 
             # Check if email already exists
             existing_user = await cls.get_by_email(session, validated_data['email'])
