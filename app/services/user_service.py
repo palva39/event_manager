@@ -52,6 +52,11 @@ class UserService:
     async def get_by_email(cls, session: AsyncSession, email: str) -> Optional[User]:
         return await cls._fetch_user(session, email=email)
 
+    class InvalidPasswordError(Exception):
+        def __init__(self, message: str):
+            self.message = message
+            super().__init__(self.message)
+        
     @classmethod
     async def create(cls, session: AsyncSession, user_data: Dict[str, str], email_service: EmailService) -> Optional[User]:
         try:
@@ -59,9 +64,12 @@ class UserService:
             validated_data = UserCreate(**user_data).model_dump()
             
             # Validate password
-            if not cls.validate_password(validated_data['password']):
-                logger.error("Password validation failed.")
-                return None
+            # Validate password
+            try:
+                cls.validate_password(validated_data['password'])
+            except InvalidPasswordError as e:
+                logger.error(f"Password validation error: {e}")
+                return {"error": str(e)}
 
             # Check if email already exists
             existing_user = await cls.get_by_email(session, validated_data['email'])
