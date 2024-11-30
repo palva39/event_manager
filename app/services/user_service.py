@@ -21,6 +21,10 @@ from fastapi import HTTPException
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+class InvalidPasswordError(Exception):
+        def __init__(self, message: str):
+            self.message = message
+            super().__init__(self.message)
 
 class UserService:
     @classmethod
@@ -51,11 +55,6 @@ class UserService:
     @classmethod
     async def get_by_email(cls, session: AsyncSession, email: str) -> Optional[User]:
         return await cls._fetch_user(session, email=email)
-
-    class InvalidPasswordError(Exception):
-        def __init__(self, message: str):
-            self.message = message
-            super().__init__(self.message)
         
     @classmethod
     async def create(cls, session: AsyncSession, user_data: Dict[str, str], email_service: EmailService) -> Optional[User]:
