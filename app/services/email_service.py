@@ -4,10 +4,16 @@ from settings.config import settings
 from app.utils.smtp_connection import SMTPClient
 from app.utils.template_manager import TemplateManager
 from app.models.user_model import User
+from unittest.mock import AsyncMock  # Import for mocking in tests
+import os  # Import for environment variable handling
 
 class EmailService:
     def __init__(self, template_manager: TemplateManager):
-        if not settings.smtp_server or not settings.smtp_port or not settings.smtp_username or not settings.smtp_password:
+         # Check for mocking environment variable
+        if os.getenv("MOCK_EMAIL") == "true":
+            print("Mocking email service for testing purposes.")
+            self.smtp_client = AsyncMock()  # Use mock SMTP client
+        elif not settings.smtp_server or not settings.smtp_port or not settings.smtp_username or not settings.smtp_password:
             print("SMTP settings not configured. Email service will not work.")
             self.smtp_client = None
         else:
