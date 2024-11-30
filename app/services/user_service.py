@@ -62,8 +62,6 @@ class UserService:
             # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
             
-            # Validate password
-            # Validate password
             try:
                 cls.validate_password(validated_data['password'])
             except InvalidPasswordError as e:
