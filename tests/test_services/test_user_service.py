@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.dependencies import get_settings
 from app.models.user_model import User
 from app.services.user_service import UserService
+from unittest.mock import AsyncMock
 
 pytestmark = pytest.mark.asyncio
 
@@ -15,6 +16,22 @@ async def test_create_user_with_valid_data(db_session, email_service):
         "password": "ValidPassword123!",
     }
     user = await UserService.create(db_session, user_data, email_service)
+    assert user is not None
+    assert user.email == user_data["email"]
+    
+async def test_create_user_with_valid_data(db_session):
+    user_data = {
+        "email": "valid_user@example.com",
+        "password": "ValidPassword123!",
+    }
+
+    # Mock the email service
+    mock_email_service = AsyncMock()
+    mock_email_service.send_verification_email.return_value = None
+
+    # Call the UserService.create function
+    user = await UserService.create(db_session, user_data, mock_email_service)
+
     assert user is not None
     assert user.email == user_data["email"]
 
