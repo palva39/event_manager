@@ -57,6 +57,11 @@ class UserService:
         try:
             # Validate input data
             validated_data = UserCreate(**user_data).model_dump()
+            
+            # Validate password
+            if not cls.validate_password(validated_data['password']):
+                logger.error("Password validation failed.")
+                return None
 
             # Check if email already exists
             existing_user = await cls.get_by_email(session, validated_data['email'])
